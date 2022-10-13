@@ -4,6 +4,7 @@ import webbrowser
 import spotipy
 
 import secrets
+from track_data import TrackData
 
 test_playlist_id = '0MiNiiLm7aSYZGW5RV3kR5'
 total_songs = 100
@@ -73,8 +74,24 @@ def quiz_dict(track_limit) -> dict:
 
 def main():
     song_dict = quiz_dict(total_songs)
-
     print(json.dumps(song_dict, indent=4))  # track name and artist dict
+
+    playlist = authorization(
+        secrets.client_id,
+        secrets.client_secret,
+        secrets.redirect_uri
+    ).playlist_items(test_playlist_id, limit=100)
+
+    # print(json.dumps(playlist, indent=4))
+
+    song_idx = 72
+
+    track = TrackData(playlist)
+
+    print(track.name(song_idx))
+    print(track.album(song_idx))
+    print(track.artist(song_idx))
+
 
 
 if __name__ == '__main__':
