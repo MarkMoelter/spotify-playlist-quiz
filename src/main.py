@@ -1,9 +1,8 @@
 import json
-import webbrowser
 
 import spotipy
 
-import secrets
+import api_secrets
 from track_data import TrackData
 
 test_playlist_id = '0MiNiiLm7aSYZGW5RV3kR5'
@@ -56,9 +55,9 @@ def quiz_dict(track_limit) -> dict:
     :return: Dictionary containing track names and artists.
     """
     spot_obj = authorization(
-        secrets.client_id,
-        secrets.client_secret,
-        secrets.redirect_uri
+        api_secrets.client_id,
+        api_secrets.client_secret,
+        api_secrets.redirect_uri
     )
 
     # generate the full list of tracks in the playlist
@@ -77,9 +76,9 @@ def main():
     print(json.dumps(song_dict, indent=4))  # track name and artist dict
 
     playlist = authorization(
-        secrets.client_id,
-        secrets.client_secret,
-        secrets.redirect_uri
+        api_secrets.client_id,
+        api_secrets.client_secret,
+        api_secrets.redirect_uri
     ).playlist_items(test_playlist_id, limit=100)
 
     # print(json.dumps(playlist, indent=4))
@@ -91,7 +90,6 @@ def main():
     print(track.name(song_idx))
     print(track.album(song_idx))
     print(track.artist(song_idx))
-
 
 
 if __name__ == '__main__':
