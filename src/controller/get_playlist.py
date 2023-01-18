@@ -1,3 +1,6 @@
+import song
+
+
 def parse_playlist_dict(playlist_dict: dict) -> list[song.Song]:
     """
     Convert the raw playlist into a list of song objects.
