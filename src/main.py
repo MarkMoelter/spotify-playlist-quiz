@@ -1,4 +1,5 @@
 import json
+import logging
 
 import spotipy
 
@@ -93,4 +94,5 @@ def main():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(filename='quiz.log', level=logging.DEBUG)
     main()
