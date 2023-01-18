@@ -88,7 +88,7 @@ def main():
 
     track = TrackData(playlist)
 
-    print(track.name(song_idx))
+    print(track.song_name(song_idx))
     print(track.album(song_idx))
     print(track.artist(song_idx))
 

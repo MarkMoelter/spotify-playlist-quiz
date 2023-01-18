@@ -2,7 +2,7 @@ class TrackData:
     def __init__(self, items: dict):
         self.items = items
 
-    def name(self, track_idx: int) -> str:
+    def song_name(self, track_idx: int) -> str:
         return self.items['items'][track_idx]['track']['name']
 
     def artist(self, track_idx: int) -> list[str]:
