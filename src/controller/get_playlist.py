@@ -1,4 +1,4 @@
-import song
+import controller.song as song
 
 
 def parse_playlist_dict(playlist_dict: dict) -> list[song.Song]:
