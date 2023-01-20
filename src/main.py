@@ -1,17 +1,18 @@
 import logging
 
-from controller.get_playlist import parse_playlist_dict
+from controller import Controller
 from model import Model
+from view import View
 
 
-# TODO: Move functionality to controller after messing around
-# TODO: Add URI to Song objects
 def main():
     TEST_PLAYLIST_ID = '0MiNiiLm7aSYZGW5RV3kR5'
 
     model = Model()
-    playlist = model.get_user_playlist(TEST_PLAYLIST_ID)
-    tracks = parse_playlist_dict(playlist)
+    view = View()
+    controller = Controller(model, view)
+
+    tracks = controller.parse_raw_playlist(TEST_PLAYLIST_ID)
 
     print(len(tracks))
     for song in tracks:
