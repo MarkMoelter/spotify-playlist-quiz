@@ -1,3 +1,5 @@
+import logging
+
 import spotipy
 
 
@@ -12,13 +14,14 @@ def spotify_client() -> spotipy.Spotify:
 
 class Model:
     def __init__(self):
+        logging.info('Initializing Model')
         self.client = spotify_client()
 
-    def all_user_playlists(self) -> list[dict]:
-        """Get each of the user's playlists"""
+    def user_playlists(self) -> list[dict]:
+        """Get each of the user's playlists as a dictionary of the name and the uri."""
         raise NotImplementedError
 
-    def get_user_playlist(self, playlist_id: str, track_limit: int = 50) -> dict:
+    def playlist_by_id(self, playlist_id: str, track_limit: int = 50) -> dict:
         """Get a single playlist by its id.
 
         :param playlist_id: The id of the playlist to retrieve
