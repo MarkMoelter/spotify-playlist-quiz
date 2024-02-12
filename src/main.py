@@ -1,13 +1,33 @@
 import json
-import webbrowser
 
 import spotipy
 
-import secrets
+from src import secrets
 from track_data import TrackData
 
 test_playlist_id = '0MiNiiLm7aSYZGW5RV3kR5'
 total_songs = 100
+
+
+def main():
+    song_dict = quiz_dict(total_songs)
+    print(json.dumps(song_dict, indent=4))  # track name and artist dict
+
+    playlist = authorization(
+        secrets.client_id,
+        secrets.client_secret,
+        secrets.redirect_uri
+    ).playlist_items(test_playlist_id, limit=100)
+
+    print(json.dumps(playlist, indent=4))
+
+    song_idx = 72
+
+    track = TrackData(playlist)
+
+    # print(track.name(song_idx))
+    # print(track.album(song_idx))
+    # print(track.artist(song_idx))
 
 
 def track_artist(playlist_items: dict, song_idx: int) -> list[str]:
@@ -20,6 +40,7 @@ def track_artist(playlist_items: dict, song_idx: int) -> list[str]:
     """
 
     artist_list = playlist_items['items'][song_idx]['track']['artists']
+
     return [artist['name'] for artist in artist_list]
 
 
@@ -47,7 +68,11 @@ def authorization(client_id, client_secret, redirect_uri) -> spotipy.Spotify:
     return spotipy.Spotify(auth=token)
 
 
-def quiz_dict(track_limit) -> dict:
+type Song = str
+type Artists = list[str]
+
+
+def quiz_dict(track_limit) -> dict[Song, Artists]:
     """
     Simplify the spotify playlist data into track name and artist.
     Store in a dictionary with the following format. [Name: Artist]
@@ -70,28 +95,6 @@ def quiz_dict(track_limit) -> dict:
             track_artist(playlist_dict, song_number)
         for song_number in range(track_limit)
     }
-
-
-def main():
-    song_dict = quiz_dict(total_songs)
-    print(json.dumps(song_dict, indent=4))  # track name and artist dict
-
-    playlist = authorization(
-        secrets.client_id,
-        secrets.client_secret,
-        secrets.redirect_uri
-    ).playlist_items(test_playlist_id, limit=100)
-
-    # print(json.dumps(playlist, indent=4))
-
-    song_idx = 72
-
-    track = TrackData(playlist)
-
-    print(track.name(song_idx))
-    print(track.album(song_idx))
-    print(track.artist(song_idx))
-
 
 
 if __name__ == '__main__':
