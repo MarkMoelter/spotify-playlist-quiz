@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 
 @dataclass
-class Song:
+class Track:
     name: str
     album: str
     artists: list[str]

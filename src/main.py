@@ -11,8 +11,7 @@ def main():
     model = Model()
     view = View()
 
-    controller = Controller(model, view)
-    controller.start()
+    tracks = model.parse_raw_playlist(TEST_PLAYLIST_ID)
 
     # tracks = controllers.parse_raw_playlist(TEST_PLAYLIST_ID)
     #
