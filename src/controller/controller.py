@@ -1,37 +1,34 @@
-import logging
-
-from controller.song import Song
-from model import Model
-from view import View
+from model.model import Model
+from view.view import View
+from .quiz import QuizController
+from .sign_in import SignInController
+from .sign_up import SignUpController
 
 
 class Controller:
     def __init__(self, model: Model, view: View):
-        self.model = model
         self.view = view
+        self.model = model
+        self.signin_controller = SignInController(model, view)
+        self.signup_controller = SignUpController(model, view)
+        self.home_controller = QuizController(model, view)
 
-    def parse_raw_playlist(self, playlist_id: str) -> list[Song]:
-        """
-        Convert the raw dictionary into a list of songs.
+        self.model.auth.add_event_listener(
+            "auth_changed", self.auth_state_listener
+        )
 
-        :param playlist_id: The identifier of the playlist.
-        :return: A list of song objects
-        """
-        # TODO: Add URI to Song objects
-        raw_playlist = self.model.playlist_by_id(playlist_id)
-        tracks: list = raw_playlist['items']
+    def auth_state_listener(self, data):
+        if data.is_logged_in:
+            self.home_controller.update_view()
+            self.view.switch("quiz")
+        else:
+            self.view.switch("signin")
 
-        songs = []
-        for track in tracks:
-            track_info = track['track']
+    def start(self):
+        # self.model.auth.load_auth_state()
+        if self.model.auth.is_logged_in:
+            self.view.switch("quiz")
+        else:
+            self.view.switch("signin")
 
-            name = track_info['name']
-            album = track_info['album']
-
-            # collect all artists for a track
-            artists = [artist['name'] for artist in track_info['artists']]
-
-            songs.append(Song(name, album, artists))
-
-        logging.debug(f'Length of Songs: {len(songs)}')
-        return songs
+        self.view.start_mainloop()
