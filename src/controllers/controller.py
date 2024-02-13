@@ -1,5 +1,5 @@
-from models.model import Model
-from view.view import View
+from src.models.model import Model
+from src.views.view import View
 from .quiz import QuizController
 from .sign_in import SignInController
 from .sign_up import SignUpController

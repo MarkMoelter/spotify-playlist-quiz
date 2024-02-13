@@ -2,7 +2,7 @@ import logging
 
 from controllers import Controller
 from models import Model
-from view import View
+from views import View
 
 
 def main():
