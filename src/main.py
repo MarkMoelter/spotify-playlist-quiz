@@ -12,10 +12,10 @@ def main():
     load_dotenv()
 
     model = Model()
-    # view = View()
-    #
-    # controller = Controller(model, view)
-    # controller.start()
+    view = View()
+
+    controller = Controller(model, view)
+    controller.start()
 
     tracks = model.parse_raw_playlist(TEST_PLAYLIST_ID)
 

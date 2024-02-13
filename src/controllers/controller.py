@@ -1,6 +1,6 @@
 from src.models.model import Model
 from src.views.view import View
-from .quiz import QuizController
+from .home import HomeController
 from .sign_in import SignInController
 from .sign_up import SignUpController
 
@@ -11,7 +11,7 @@ class Controller:
         self.model = model
         self.signin_controller = SignInController(model, view)
         self.signup_controller = SignUpController(model, view)
-        self.home_controller = QuizController(model, view)
+        self.home_controller = HomeController(model, view)
 
         self.model.auth.add_event_listener(
             "auth_changed", self.auth_state_listener
