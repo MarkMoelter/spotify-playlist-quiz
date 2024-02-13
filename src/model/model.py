@@ -1,5 +1,3 @@
-import logging
-
 import spotipy
 
 
@@ -14,7 +12,6 @@ def spotify_client() -> spotipy.Spotify:
 
 class Model:
     def __init__(self):
-        logging.info('Initializing Model')
         self.client = spotify_client()
 
     def user_playlists(self) -> list[dict]:

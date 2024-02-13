@@ -7,7 +7,6 @@ from view import View
 
 class Controller:
     def __init__(self, model: Model, view: View):
-        logging.info('Initializing Controller')
         self.model = model
         self.view = view
 
@@ -33,4 +32,6 @@ class Controller:
             artists = [artist['name'] for artist in track_info['artists']]
 
             songs.append(Song(name, album, artists))
+
+        logging.debug(f'Length of Songs: {len(songs)}')
         return songs
