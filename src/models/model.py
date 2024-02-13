@@ -1,6 +1,6 @@
 import os
 
-import spotipy
+import spotipy  # type: ignore
 
 from .auth import Auth
 from .track import Track
@@ -23,7 +23,11 @@ class Model:
         return spotipy.Spotify(auth=access_token)
 
     def user_playlists(self) -> list[dict]:
-        """Get each of the user's playlists as a dictionary of the name and the uri."""
+        """
+        Get each of the user's playlists as
+        a dictionary of the name and the uri.
+        :return: A list of the user's playlists.
+        """
         raise NotImplementedError
 
     def playlist_by_id(self, playlist_id: str, track_limit: int = 50) -> dict:
@@ -35,7 +39,9 @@ class Model:
         """
         return self.get_client().playlist_items(playlist_id, limit=track_limit)
 
-    def parse_raw_playlist(self, playlist_id: str, limit: int = 100) -> list[Track]:
+    def parse_raw_playlist(self,
+                           playlist_id: str,
+                           limit: int = 100) -> list[Track]:
         """
         Convert the raw dictionary into a list of songs.
 
@@ -44,7 +50,8 @@ class Model:
         :return: A list of tracks.
         """
         songs = []
-        for track in self.get_client().playlist_items(playlist_id, limit=limit)['items']:
+        playlist = self.get_client().playlist_items(playlist_id, limit=limit)
+        for track in playlist['items']:
             track_info = track['track']
 
             name = track_info['name']

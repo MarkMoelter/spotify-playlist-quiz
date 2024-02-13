@@ -16,6 +16,6 @@ class SignInController:
         username = self.frame.username_input.get()
         pasword = self.frame.password_input.get()
         data = {"username": username, "password": pasword}
-        print(data)  # of course we don't want to print the password in a real app!
+        print(data)
         self.frame.password_input.delete(0, last=len(pasword))
         self.model.auth.login(data)

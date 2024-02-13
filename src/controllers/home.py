@@ -17,4 +17,4 @@ class HomeController:
             username = current_user["username"]
             self.frame.greeting.config(text=f"Welcome, {username}!")
         else:
-            self.frame.greeting.config(text=f"")
+            self.frame.greeting.config(text="Not logged in")

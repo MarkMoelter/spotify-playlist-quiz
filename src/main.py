@@ -2,9 +2,9 @@ import logging
 
 from dotenv import load_dotenv
 
-from controllers import Controller
-from models import Model
-from views import View
+from src.controllers import Controller
+from src.models import Model
+from src.views import View
 
 
 def main():

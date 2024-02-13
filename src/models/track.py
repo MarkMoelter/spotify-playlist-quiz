@@ -6,4 +6,4 @@ class Track:
     name: str
     album: str
     artists: list[str]
-    uri: str = None
+    uri: str | None = None

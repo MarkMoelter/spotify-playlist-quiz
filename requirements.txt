@@ -1,3 +1,5 @@
 spotipy~=2.23.0
 pytest
 python-dotenv
+flake8
+mypy
