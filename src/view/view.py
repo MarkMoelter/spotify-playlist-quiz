@@ -1,21 +1,23 @@
-import tkinter as tk
-from tkinter import ttk
+from .quiz import QuizView
+from .root import Root
+from .sign_in import SignInView
 
 
-class View(tk.Frame):
-    def __init__(self, root):
-        super().__init__(root)
-        self.root = root
+class View:
+    def __init__(self):
+        self.root = Root()
+        self.frames = {}
 
-    def render_title_page(self, playlists: tuple[str, ...]):
-        """Display the title page and its elements."""
-        title_label = tk.Label(self, text='Playlist Quiz')
-        question_radio = tk.Radiobutton(self, text='Questions')
+        self._add_frame(SignInView, "signin")
+        self._add_frame(QuizView, "quiz")
 
-        # playlist selection
-        n = tk.StringVar(self)
-        playlist_select = ttk.Combobox(self, textvariable=n)
-        playlist_select['values'] = playlists
-        playlist_select.current()
+    def _add_frame(self, Frame, name):
+        self.frames[name] = Frame(self.root)
+        self.frames[name].grid(row=0, column=0, sticky="nsew")
 
-        start = tk.Button(self, text='Start Quiz')
+    def switch(self, name):
+        frame = self.frames[name]
+        frame.tkraise()
+
+    def start_mainloop(self):
+        self.root.mainloop()
