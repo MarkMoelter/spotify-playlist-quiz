@@ -55,10 +55,11 @@ class Model:
             track_info = track['track']
 
             name = track_info['name']
-            album = track_info['album']
+            album = track_info['album']['name']
+            uri = track_info['uri']
 
             # collect all artists for a track
             artists = [artist['name'] for artist in track_info['artists']]
 
-            songs.append(Track(name, album, artists))
+            songs.append(Track(name, album, artists, uri))
         return songs
