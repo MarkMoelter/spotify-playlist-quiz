@@ -1,18 +1,19 @@
 import spotipy
 
-
-# TODO: Switch this from env variables to parameters when deploying
-def spotify_client() -> spotipy.Spotify:
-    """Authorize an API token using the user's credentials"""
-
-    oauth = spotipy.SpotifyOAuth()
-    access_token = oauth.get_access_token(as_dict=False)
-    return spotipy.Spotify(auth=access_token)
+from .auth import Auth
 
 
 class Model:
     def __init__(self):
-        self.client = spotify_client()
+        self.auth = Auth()
+
+    @staticmethod
+    def get_client() -> spotipy.Spotify:
+        """Authorize an API token using the user's credentials"""
+
+        oauth = spotipy.SpotifyOAuth()
+        access_token = oauth.get_access_token(as_dict=False)
+        return spotipy.Spotify(auth=access_token)
 
     def user_playlists(self) -> list[dict]:
         """Get each of the user's playlists as a dictionary of the name and the uri."""
