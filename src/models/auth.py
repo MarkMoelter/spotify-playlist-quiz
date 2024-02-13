@@ -1,4 +1,4 @@
-from .base import ObservableModel
+from .observable import ObservableModel
 
 
 class Auth(ObservableModel):

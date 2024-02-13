@@ -1,6 +1,7 @@
 from .quiz import QuizView
 from .root import Root
 from .sign_in import SignInView
+from .sign_up import SignUpView
 
 
 class View:
@@ -9,6 +10,7 @@ class View:
         self.frames = {}
 
         self._add_frame(SignInView, "signin")
+        self._add_frame(SignUpView, "signup")
         self._add_frame(QuizView, "quiz")
 
     def _add_frame(self, Frame, name):

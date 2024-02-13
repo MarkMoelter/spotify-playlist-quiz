@@ -1,4 +1,4 @@
-from model.model import Model
+from models.model import Model
 from view.view import View
 from .quiz import QuizController
 from .sign_in import SignInController
@@ -25,7 +25,7 @@ class Controller:
             self.view.switch("signin")
 
     def start(self):
-        # self.model.auth.load_auth_state()
+        # self.models.auth.load_auth_state()
         if self.model.auth.is_logged_in:
             self.view.switch("quiz")
         else:
