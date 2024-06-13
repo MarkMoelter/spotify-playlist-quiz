@@ -1,0 +1,4 @@
+[flake8]
+exclude = __init__.py
+count = True
+ignore = E501
