@@ -9,7 +9,6 @@ from src.views import View
 
 
 def main():
-    TEST_PLAYLIST_ID = '0MiNiiLm7aSYZGW5RV3kR5'
     load_dotenv()
 
     model = Model()
@@ -18,7 +17,7 @@ def main():
     controller = Controller(model, view)
     controller.start()
 
-    tracks = model.parse_raw_playlist(TEST_PLAYLIST_ID)
+    tracks = model.parse_raw_playlist(list(model.user_playlists().values())[0])
 
     print(len(tracks))
     for song in tracks[:5]:

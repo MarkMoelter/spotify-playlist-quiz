@@ -1,6 +1,6 @@
 import os
 
-import spotipy  # type: ignore
+import spotipy
 
 from .auth import Auth
 from .track import Track
@@ -22,13 +22,18 @@ class Model:
         access_token = oauth.get_access_token(as_dict=False)
         return spotipy.Spotify(auth=access_token)
 
-    def user_playlists(self) -> list[dict]:
+    def user_playlists(self, limit: int = 50, offset: int = 0) -> dict[str, str]:
+        """Get each of the user's playlists as a dictionary of the name and the uri.
+
+        :param limit: The maximum number of playlists to return.
+        :param offset: The starting position of the playlists to return.
+        :return: A dictionary of playlist names and their uri.
         """
-        Get each of the user's playlists as
-        a dictionary of the name and the uri.
-        :return: A list of the user's playlists.
-        """
-        raise NotImplementedError
+
+        return {
+            item['name']: item['uri']
+            for item in self.get_client().current_user_playlists(limit=limit, offset=offset)['items']
+        }
 
     def playlist_by_id(self, playlist_id: str, track_limit: int = 50) -> dict:
         """Get a single playlist by its id.
@@ -39,9 +44,7 @@ class Model:
         """
         return self.get_client().playlist_items(playlist_id, limit=track_limit)
 
-    def parse_raw_playlist(self,
-                           playlist_id: str,
-                           limit: int = 100) -> list[Track]:
+    def parse_raw_playlist(self, playlist_id: str, limit: int = 100) -> list[Track]:
         """
         Convert the raw dictionary into a list of songs.
 
@@ -50,8 +53,7 @@ class Model:
         :return: A list of tracks.
         """
         songs = []
-        playlist = self.get_client().playlist_items(playlist_id, limit=limit)
-        for track in playlist['items']:
+        for track in self.get_client().playlist_items(playlist_id, limit=limit)['items']:
             track_info = track['track']
 
             name = track_info['name']
@@ -61,5 +63,5 @@ class Model:
             # collect all artists for a track
             artists = [artist['name'] for artist in track_info['artists']]
 
-            songs.append(Track(name, album, artists, uri))
+            songs.append(Track(name=name, album=album, artists=artists, uri=uri))
         return songs

@@ -1,9 +1,13 @@
-from dataclasses import dataclass
+from pydantic import BaseModel, computed_field
 
 
-@dataclass
-class Track:
+class Track(BaseModel):
     name: str
     album: str
     artists: list[str]
-    uri: str | None = None
+    uri: str = None
+
+    @computed_field()
+    @property
+    def is_single(self) -> bool:
+        return self.name == self.album
