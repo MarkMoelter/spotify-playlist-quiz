@@ -15,13 +15,12 @@ def main():
     view = View()
 
     controller = Controller(model, view)
-    controller.start()
+    # controller.start()
 
     tracks = model.parse_raw_playlist(list(model.user_playlists().values())[0])
 
-    print(len(tracks))
-    for song in tracks[:5]:
-        print(song)
+    for song in tracks:
+        pprint(song)
 
 
 if __name__ == '__main__':
