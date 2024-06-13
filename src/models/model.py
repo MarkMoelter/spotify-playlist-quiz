@@ -22,9 +22,18 @@ class Model:
         access_token = oauth.get_access_token(as_dict=False)
         return spotipy.Spotify(auth=access_token)
 
-    def user_playlists(self) -> list[dict]:
-        """Get each of the user's playlists as a dictionary of the name and the uri."""
-        raise NotImplementedError
+    def user_playlists(self, limit: int = 50, offset: int = 0) -> dict[str, str]:
+        """Get each of the user's playlists as a dictionary of the name and the uri.
+
+        :param limit: The maximum number of playlists to return.
+        :param offset: The starting position of the playlists to return.
+        :return: A dictionary of playlist names and their uri.
+        """
+
+        return {
+            item['name']: item['uri']
+            for item in self.get_client().current_user_playlists(limit=limit, offset=offset)['items']
+        }
 
     def playlist_by_id(self, playlist_id: str, track_limit: int = 50) -> dict:
         """Get a single playlist by its id.
@@ -48,10 +57,11 @@ class Model:
             track_info = track['track']
 
             name = track_info['name']
-            album = track_info['album']
+            album = track_info['album']['name']
+            uri = track_info['uri']
 
             # collect all artists for a track
             artists = [artist['name'] for artist in track_info['artists']]
 
-            songs.append(Track(name, album, artists))
+            songs.append(Track(name=name, album=album, artists=artists, uri=uri))
         return songs
