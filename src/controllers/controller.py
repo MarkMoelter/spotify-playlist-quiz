@@ -20,14 +20,14 @@ class Controller:
     def auth_state_listener(self, data):
         if data.is_logged_in:
             self.home_controller.update_view()
-            self.view.switch("quiz")
+            self.view.switch("home")
         else:
             self.view.switch("signin")
 
     def start(self):
         # self.models.auth.load_auth_state()
         if self.model.auth.is_logged_in:
-            self.view.switch("quiz")
+            self.view.switch("home")
         else:
             self.view.switch("signin")
 

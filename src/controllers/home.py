@@ -2,11 +2,12 @@ class HomeController:
     def __init__(self, model, view):
         self.model = model
         self.view = view
-        self.frame = self.view.frames["quiz"]
+        self.frame = self.view.frames["home"]
         self._bind()
 
     def _bind(self):
         self.frame.signout_btn.config(command=self.logout)
+        self.frame.playlists["values"] = [playlist for playlist in self.model.user_playlists().keys()]
 
     def logout(self):
         self.model.auth.logout()
