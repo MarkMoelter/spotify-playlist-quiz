@@ -7,7 +7,9 @@ class HomeController:
 
     def _bind(self):
         self.frame.signout_btn.config(command=self.logout)
-        self.frame.playlists["values"] = [playlist for playlist in self.model.user_playlists().keys()]
+        self.frame.playlists["values"] = [
+            playlist for playlist in self.model.user_playlists().keys()
+        ]
 
     def logout(self):
         self.model.auth.logout()

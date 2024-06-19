@@ -13,9 +13,7 @@ class Controller:
         self.signup_controller = SignUpController(model, view)
         self.home_controller = HomeController(model, view)
 
-        self.model.auth.add_event_listener(
-            "auth_changed", self.auth_state_listener
-        )
+        self.model.auth.add_event_listener("auth_changed", self.auth_state_listener)
 
     def auth_state_listener(self, data):
         if data.is_logged_in:
