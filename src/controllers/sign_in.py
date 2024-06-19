@@ -14,8 +14,8 @@ class SignInController:
 
     def signin(self):
         username = self.frame.username_input.get()
-        pasword = self.frame.password_input.get()
-        data = {"username": username, "password": pasword}
+        password = self.frame.password_input.get()
+        data = {"username": username, "password": password}
         print(data)
-        self.frame.password_input.delete(0, last=len(pasword))
+        self.frame.password_input.delete(0, last=len(password))
         self.model.auth.login(data)
