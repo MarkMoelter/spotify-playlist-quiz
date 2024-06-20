@@ -14,9 +14,10 @@ class Model:
     def get_client() -> spotipy.Spotify:
         """Authorize an API token using the user's credentials"""
 
-        client_id = os.getenv('SPOTIPY_CLIENT_ID')
-        client_secret = os.getenv('SPOTIPY_CLIENT_SECRET')
-        redirect_url = os.getenv('REDIRECT_URI')
+        client_id = os.getenv("SPOTIPY_CLIENT_ID")
+        client_secret = os.getenv("SPOTIPY_CLIENT_SECRET")
+        redirect_url = os.getenv("REDIRECT_URI")
+        # TODO: Use self.auth here to get the client_id, secret and redirect uri
 
         oauth = spotipy.SpotifyOAuth(client_id, client_secret, redirect_url)
         access_token = oauth.get_access_token(as_dict=False)
@@ -31,8 +32,10 @@ class Model:
         """
 
         return {
-            item['name']: item['uri']
-            for item in self.get_client().current_user_playlists(limit=limit, offset=offset)['items']
+            item["name"]: item["uri"]
+            for item in self.get_client().current_user_playlists(
+                limit=limit, offset=offset
+            )["items"]
         }
 
     def playlist_by_id(self, playlist_id: str, track_limit: int = 50) -> dict:
@@ -53,15 +56,17 @@ class Model:
         :return: A list of tracks.
         """
         songs = []
-        for track in self.get_client().playlist_items(playlist_id, limit=limit)['items']:
-            track_info = track['track']
+        for track in self.get_client().playlist_items(playlist_id, limit=limit)[
+            "items"
+        ]:
+            track_info = track["track"]
 
-            name = track_info['name']
-            album = track_info['album']['name']
-            uri = track_info['uri']
+            name = track_info["name"]
+            album = track_info["album"]["name"]
+            uri = track_info["uri"]
 
             # collect all artists for a track
-            artists = [artist['name'] for artist in track_info['artists']]
+            artists = [artist["name"] for artist in track_info["artists"]]
 
             songs.append(Track(name=name, album=album, artists=artists, uri=uri))
         return songs
