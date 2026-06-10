@@ -1,3 +1,4 @@
+from src.audio import AudioPlayer
 from src.models.track import Track
 
 QUESTIONS_PER_ROUND = 10
@@ -12,6 +13,13 @@ class QuizController:
         self._questions: list[dict] = []
         self._current: int = 0
         self._score: int = 0
+
+        self._audio = AudioPlayer()
+        # AudioPlayer calls on_status from a background thread.
+        # Tkinter widgets must only be updated from the main thread.
+        # frame.after(0, fn) schedules fn to run on the main thread at the
+        # next opportunity — this is the standard Tkinter thread-bridge pattern.
+        self._audio.on_status = lambda s: self.frame.after(0, self._on_audio_status, s)
 
     def start(self, tracks: list[Track]):
         """Begin a new quiz round with the given track list."""
@@ -30,12 +38,11 @@ class QuizController:
         self.frame.progress_label.config(
             text=f"Question {self._current + 1} of {total}  |  Score: {self._score}"
         )
-        self.frame.prompt.config(text="Which song is this?")
-        self.frame.artist_label.config(
-            text=f"Artist: {q['track'].artists[0]}"
-        )
+        self.frame.prompt.config(text="Listen to the preview — which song is it?")
+        self.frame.artist_label.config(text=f"Artist: {q['track'].artists[0]}")
         self.frame.feedback_label.config(text="")
         self.frame.next_btn.grid_remove()
+        self.frame.audio_status.config(text="")
 
         for i, btn in enumerate(self.frame.choice_btns):
             choice = q["choices"][i] if i < len(q["choices"]) else ""
@@ -46,7 +53,38 @@ class QuizController:
                 command=lambda c=choice: self._answer(c),
             )
 
+        # Wire the play button to replay the preview on demand
+        preview_url = q["track"].preview_url
+        self.frame.play_btn.config(
+            state="normal",
+            command=lambda: self._audio.play(preview_url),
+        )
+
+        # Auto-play as soon as the question appears
+        self._audio.play(preview_url)
+
+    def _on_audio_status(self, status: str):
+        """Update the audio status label. Runs on the main thread via frame.after()."""
+        messages = {
+            "loading": "Loading preview…",
+            "playing": "▶  Playing…",
+            "done": "",
+            "unavailable": "No preview available for this track.",
+        }
+        self.frame.audio_status.config(text=messages.get(status, ""))
+
+        # Disable the play button while audio is actively loading or playing
+        # so the user can't stack multiple simultaneous downloads
+        if status in ("loading", "playing"):
+            self.frame.play_btn.config(state="disabled")
+        else:
+            self.frame.play_btn.config(state="normal")
+
     def _answer(self, chosen: str):
+        # Stop the preview — the answer has been given, no need to keep playing
+        self._audio.stop()
+        self.frame.play_btn.config(state="disabled")
+
         q = self._questions[self._current]
         correct = q["answer"]
 
@@ -78,6 +116,7 @@ class QuizController:
         self._show_question()
 
     def _finish(self):
+        self._audio.stop()
         total = len(self._questions)
         pct = self._score * 100 // total
         rating = (
@@ -91,7 +130,9 @@ class QuizController:
         )
         self.frame.prompt.config(text="")
         self.frame.artist_label.config(text="")
+        self.frame.audio_status.config(text="")
         self.frame.feedback_label.config(text="")
+        self.frame.play_btn.config(state="disabled")
         for btn in self.frame.choice_btns:
             btn.grid_remove()
         self.frame.next_btn.config(text="Back to Home", command=self._back_home)
@@ -101,4 +142,5 @@ class QuizController:
         for btn in self.frame.choice_btns:
             btn.grid()
             btn.config(bg="SystemButtonFace")
+        self.frame.play_btn.config(state="normal")
         self.view.switch("home")
