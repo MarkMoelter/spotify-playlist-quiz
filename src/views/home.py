@@ -35,3 +35,7 @@ class HomeView(Frame):
         self.select_playlist_btn = ttk.Button(self, text="Start Quiz →",
                                               style="Green.TButton")
         self.select_playlist_btn.grid(row=3, column=2, padx=(0, 16), pady=4)
+
+        # Status label: shows loading states and error messages
+        self.status_label = Label(self, text="", **theme.LABEL_DIM)
+        self.status_label.grid(row=4, column=0, columnspan=3, pady=(8, 0))

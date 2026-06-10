@@ -1,4 +1,9 @@
+import logging
 import threading
+
+from src.exceptions import AuthError, NetworkError
+
+logger = logging.getLogger("my_app")
 
 
 class SignInController:
@@ -14,15 +19,22 @@ class SignInController:
     def signin(self):
         self.frame.signin_btn.config(state="disabled")
         self.frame.status_label.config(text="Opening Spotify login in your browser…")
-        # Run OAuth in a background thread so the Tkinter loop stays responsive
         threading.Thread(target=self._do_oauth, daemon=True).start()
 
     def _do_oauth(self):
         try:
             self.model.connect()
-        except Exception as e:
+            # Success — auth_changed event fires automatically via Auth.login(),
+            # which triggers Controller._auth_state_listener to switch screens.
+        except (AuthError, NetworkError) as e:
+            # Expected: bad credentials, no network, user closed the browser, etc.
             self.frame.after(0, self._on_error, str(e))
+        except Exception:
+            # Unexpected: log full traceback for the developer, show generic message
+            logger.exception("Unexpected error during OAuth")
+            self.frame.after(0, self._on_error,
+                             "An unexpected error occurred. Check the logs.")
 
     def _on_error(self, message: str):
-        self.frame.status_label.config(text=f"Error: {message}")
+        self.frame.status_label.config(text=message)
         self.frame.signin_btn.config(state="normal")
