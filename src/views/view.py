@@ -20,6 +20,7 @@ class View:
     def _add_frame(self, Frame, name):
         self.frames[name] = Frame(self.root)
         self.frames[name].grid(row=0, column=0, sticky="nsew")
+        self.frames[name].grid_columnconfigure(0, weight=1)
 
     def switch(self, name):
         self.frames[name].tkraise()

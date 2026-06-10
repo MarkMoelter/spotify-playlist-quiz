@@ -1,45 +1,52 @@
-from tkinter import Frame, Label, Button
+from tkinter import Frame, Label
+from tkinter import ttk
+from . import theme
 
 
 class QuizView(Frame):
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, bg=theme.BG, **kwargs)
 
         self.grid_columnconfigure(0, weight=1)
 
-        # Progress / score bar
-        self.progress_label = Label(self, text="")
-        self.progress_label.grid(row=0, column=0, padx=10, pady=(10, 0))
+        # ── Progress bar + score ──────────────────────────────────────────────
+        self.progress_label = Label(self, text="", **theme.LABEL_DIM)
+        self.progress_label.grid(row=0, column=0, pady=(12, 0))
 
-        # Prompt: "Which song is this?"
-        self.prompt = Label(self, text="", wraplength=460)
-        self.prompt.grid(row=1, column=0, padx=10, pady=(10, 4))
+        self.progress_bar = ttk.Progressbar(self, orient="horizontal",
+                                            mode="determinate", length=460)
+        self.progress_bar.grid(row=1, column=0, padx=30, pady=(4, 10), sticky="ew")
 
-        # Artist hint
-        self.artist_label = Label(self, text="", font=("", 10, "italic"))
-        self.artist_label.grid(row=2, column=0, padx=10, pady=(0, 6))
+        # ── Prompt ────────────────────────────────────────────────────────────
+        self.prompt = Label(self, text="", wraplength=460,
+                            **theme.LABEL_KW, font=theme.FONT_HEADER)
+        self.prompt.grid(row=2, column=0, padx=10, pady=(4, 2))
 
-        # Audio controls — play button + status shown side by side
-        self.play_btn = Button(self, text="▶  Play Preview")
-        self.play_btn.grid(row=3, column=0, pady=(0, 2))
+        self.artist_label = Label(self, text="", **theme.LABEL_DIM)
+        self.artist_label.grid(row=3, column=0, padx=10, pady=(0, 8))
 
-        # Status tells the user what's happening with audio
-        # ("Loading…", "Playing…", "No preview available", "")
-        self.audio_status = Label(self, text="", font=("", 9, "italic"))
-        self.audio_status.grid(row=4, column=0, pady=(0, 8))
+        # ── Audio controls ────────────────────────────────────────────────────
+        self.play_btn = ttk.Button(self, text="▶  Play Preview",
+                                   style="Sub.TButton")
+        self.play_btn.grid(row=4, column=0, pady=(0, 2))
 
-        # Four answer buttons
-        self.choice_btns: list[Button] = []
+        self.audio_status = Label(self, text="", **theme.LABEL_DIM)
+        self.audio_status.grid(row=5, column=0, pady=(0, 10))
+
+        # ── Answer buttons ────────────────────────────────────────────────────
+        # We store the style name alongside the button so the controller can
+        # swap styles (Choice → Correct / Wrong) without touching geometry.
+        self.choice_btns: list[ttk.Button] = []
         for i in range(4):
-            btn = Button(self, text="", wraplength=440, justify="left")
-            btn.grid(row=5 + i, column=0, padx=30, pady=4, sticky="ew")
+            btn = ttk.Button(self, text="", style="Choice.TButton")
+            btn.grid(row=6 + i, column=0, padx=40, pady=3, sticky="ew")
             self.choice_btns.append(btn)
 
-        # Feedback label shown after answering
-        self.feedback_label = Label(self, text="")
-        self.feedback_label.grid(row=9, column=0, padx=10, pady=6)
+        # ── Feedback + next ───────────────────────────────────────────────────
+        self.feedback_label = Label(self, text="", **theme.LABEL_KW,
+                                    font=("Helvetica", 11, "bold"))
+        self.feedback_label.grid(row=10, column=0, pady=(8, 2))
 
-        # Next question / finish button (hidden until answer chosen)
-        self.next_btn = Button(self, text="Next")
-        self.next_btn.grid(row=10, column=0, pady=(4, 10))
+        self.next_btn = ttk.Button(self, text="Next", style="Green.TButton")
+        self.next_btn.grid(row=11, column=0, pady=(4, 12))
         self.next_btn.grid_remove()
