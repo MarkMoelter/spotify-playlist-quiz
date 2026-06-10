@@ -1,17 +1,16 @@
 from tkinter import Tk
+from . import theme
 
 
 class Root(Tk):
     def __init__(self):
         super().__init__()
 
-        start_width = 500
-        min_width = 400
-        start_height = 300
-        min_height = 250
-
-        self.geometry(f"{start_width}x{start_height}")
-        self.minsize(width=min_width, height=min_height)
-        self.title("TKinter MVC Multi-frame GUI")
+        self.geometry("520x420")
+        self.minsize(width=440, height=360)
+        self.title("Spotify Playlist Quiz")
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)
+
+        # Apply once here — ttk.Style is global so every ttk widget picks it up
+        theme.apply(self)
