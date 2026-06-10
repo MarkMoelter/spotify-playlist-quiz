@@ -1,3 +1,6 @@
+import threading
+
+
 class SignInController:
     def __init__(self, model, view):
         self.model = model
@@ -7,15 +10,19 @@ class SignInController:
 
     def _bind(self):
         self.frame.signin_btn.config(command=self.signin)
-        self.frame.signup_btn.config(command=self.signup)
-
-    def signup(self):
-        self.view.switch("signup")
 
     def signin(self):
-        username = self.frame.username_input.get()
-        password = self.frame.password_input.get()
-        data = {"username": username, "password": password}
-        print(data)
-        self.frame.password_input.delete(0, last=len(password))
-        self.model.auth.login(data)
+        self.frame.signin_btn.config(state="disabled")
+        self.frame.status_label.config(text="Opening Spotify login in your browser…")
+        # Run OAuth in a background thread so the Tkinter loop stays responsive
+        threading.Thread(target=self._do_oauth, daemon=True).start()
+
+    def _do_oauth(self):
+        try:
+            self.model.connect()
+        except Exception as e:
+            self.frame.after(0, self._on_error, str(e))
+
+    def _on_error(self, message: str):
+        self.frame.status_label.config(text=f"Error: {message}")
+        self.frame.signin_btn.config(state="normal")

@@ -12,6 +12,6 @@ class Root(Tk):
 
         self.geometry(f"{start_width}x{start_height}")
         self.minsize(width=min_width, height=min_height)
-        self.title("TKinter MVC Multi-frame GUI")
+        self.title("Spotify Playlist Quiz")
         self.grid_columnconfigure(0, weight=1)
         self.grid_rowconfigure(0, weight=1)

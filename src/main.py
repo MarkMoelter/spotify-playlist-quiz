@@ -1,6 +1,5 @@
 import logging.config
 import pathlib
-from pprint import pprint
 
 import yaml
 from dotenv import load_dotenv
@@ -25,17 +24,11 @@ def main():
 
     model = Model()
     view = View()
-
     controller = Controller(model, view)
 
     logger.info("starting my_app")
     controller.start()
     logger.info("closing my_app")
-
-    tracks = model.parse_raw_playlist(list(model.user_playlists().values())[0])
-
-    for song in tracks:
-        pprint(song)
 
 
 if __name__ == "__main__":
