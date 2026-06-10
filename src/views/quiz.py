@@ -9,9 +9,16 @@ class QuizView(Frame):
 
         self.grid_columnconfigure(0, weight=1)
 
-        # ── Progress bar + score ──────────────────────────────────────────────
-        self.progress_label = Label(self, text="", **theme.LABEL_DIM)
-        self.progress_label.grid(row=0, column=0, pady=(12, 0))
+        # ── Top bar: cancel button (left) + progress (center) ────────────────
+        top_bar = Frame(self, bg=theme.BG)
+        top_bar.grid(row=0, column=0, sticky="ew", padx=16, pady=(10, 0))
+        top_bar.grid_columnconfigure(1, weight=1)
+
+        self.cancel_btn = ttk.Button(top_bar, text="✕ Quit", style="Sub.TButton")
+        self.cancel_btn.grid(row=0, column=0, sticky="w")
+
+        self.progress_label = Label(top_bar, text="", **theme.LABEL_DIM)
+        self.progress_label.grid(row=0, column=1)
 
         self.progress_bar = ttk.Progressbar(self, orient="horizontal",
                                             mode="determinate", length=460)

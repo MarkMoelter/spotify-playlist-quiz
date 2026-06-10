@@ -179,31 +179,33 @@ class Model:
         each new question — so the same song doesn't show up as a wrong choice over
         and over.
         """
-        # Names used as correct answers are never eligible as wrong choices
-        correct_names: set[str] = {t.name for t in selected}
-
-        # Deduplicate the full wrong pool by name upfront — covers/remixes with
-        # the same title count as one candidate
-        unique_pool: dict[str, Track] = {}
+        # Deduplicate the entire track list by name — covers/remixes with the
+        # same title count as one candidate regardless of URI.
+        unique_by_name: dict[str, Track] = {}
         for t in tracks:
-            if t.name not in correct_names and t.name not in unique_pool:
-                unique_pool[t.name] = t
-        pool_names = list(unique_pool.keys())
+            if t.name not in unique_by_name:
+                unique_by_name[t.name] = t
 
         used_as_wrong: set[str] = set()
         questions: list[dict] = []
 
         for correct in selected:
-            random.shuffle(pool_names)
+            # Only exclude THIS question's answer — not all selected answers.
+            # Excluding all selected answers was shrinking the pool too aggressively
+            # on small playlists, causing blank choice slots.
+            pool = [name for name in unique_by_name if name != correct.name]
 
-            # Prefer names not yet used as a wrong choice in this round
-            unused = [n for n in pool_names if n not in used_as_wrong]
-            already_used = [n for n in pool_names if n in used_as_wrong]
-            ordered = unused + already_used  # fresh choices first, stale as fallback
+            # Split into unused-this-round vs already-used, shuffle each
+            # independently so fallback choices are also random (not always the
+            # same tracks in the same order).
+            unused = [n for n in pool if n not in used_as_wrong]
+            reused = [n for n in pool if n in used_as_wrong]
+            random.shuffle(unused)
+            random.shuffle(reused)
 
-            wrong_names = ordered[:3]
-            for name in wrong_names:
-                used_as_wrong.add(name)
+            # Take up to 3, preferring fresh names
+            wrong_names = (unused + reused)[:3]
+            used_as_wrong.update(wrong_names)
 
             choices = wrong_names + [correct.name]
             random.shuffle(choices)

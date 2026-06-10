@@ -1,5 +1,4 @@
 pydantic
-pygame
 python-dotenv
 pyyaml
 spotipy

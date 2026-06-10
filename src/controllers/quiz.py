@@ -32,6 +32,7 @@ class QuizController:
         self._questions = self.model.build_questions(tracks, selected)
         self._current = 0
         self._score = 0
+        self.frame.cancel_btn.config(command=self._cancel, state="normal")
         self._show_question()
         self.view.switch("quiz")
 
@@ -170,6 +171,7 @@ class QuizController:
         self.frame.audio_status.config(text="")
         self.frame.feedback_label.config(text="")
         self.frame.play_btn.config(state="disabled")
+        self.frame.cancel_btn.config(state="disabled")
         for btn in self.frame.choice_btns:
             btn.grid_remove()
 
@@ -185,6 +187,13 @@ class QuizController:
         if self.view._on_show_leaderboard:
             self.view._on_show_leaderboard()
 
+    def _cancel(self):
+        """Abandon the current quiz mid-round and return to home."""
+        self._cancel_pause_timer()
+        threading.Thread(target=self.model.pause_playback, daemon=True).start()
+        self._reset_choice_btns()
+        self.view.switch("home")
+
     def _back_home(self):
         self._reset_choice_btns()
         self.view.switch("home")
@@ -194,4 +203,5 @@ class QuizController:
             btn.grid()
             btn.config(style="Choice.TButton")
         self.frame.play_btn.config(state="normal")
+        self.frame.cancel_btn.config(state="normal")
         self.frame.home_btn.grid_remove()
