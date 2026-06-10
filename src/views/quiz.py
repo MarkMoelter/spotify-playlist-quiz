@@ -48,5 +48,10 @@ class QuizView(Frame):
         self.feedback_label.grid(row=10, column=0, pady=(8, 2))
 
         self.next_btn = ttk.Button(self, text="Next", style="Green.TButton")
-        self.next_btn.grid(row=11, column=0, pady=(4, 12))
+        self.next_btn.grid(row=11, column=0, pady=(4, 4))
         self.next_btn.grid_remove()
+
+        # "Back to Home" shown alongside leaderboard button on results screen
+        self.home_btn = ttk.Button(self, text="← Home", style="Sub.TButton")
+        self.home_btn.grid(row=12, column=0, pady=(0, 12))
+        self.home_btn.grid_remove()

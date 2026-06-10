@@ -5,34 +5,33 @@ from src.exceptions import NetworkError, PlaylistError
 from src.models.track import Track
 from src.views import theme
 
-QUESTIONS_PER_ROUND = 10
-PLAYBACK_SECONDS = 15  # how long to play before auto-pausing
+PLAYBACK_SECONDS = 15
 
 
 class QuizController:
-    def __init__(self, model, view):
+    def __init__(self, model, leaderboard_model, view):
         self.model = model
+        self.lb = leaderboard_model
         self.view = view
         self.frame = self.view.frames["quiz"]
         self._tracks: list[Track] = []
         self._questions: list[dict] = []
         self._current: int = 0
         self._score: int = 0
-        self._device_id: str | None = None
         self._pause_timer: threading.Timer | None = None
         self._show_artist: bool = True
+        self._playlist_name: str = ""
 
-    def start(self, tracks: list[Track], show_artist: bool = True):
+    def start(self, tracks: list[Track], show_artist: bool = True,
+              num_questions: int = 10, playlist_name: str = ""):
         self._tracks = tracks
         self._show_artist = show_artist
-        n = min(QUESTIONS_PER_ROUND, len(tracks))
-        # Sample without replacement so no track appears as the answer twice
+        self._playlist_name = playlist_name
+        n = min(num_questions, len(tracks))
         selected = random.sample(tracks, n)
         self._questions = [self.model.build_question(tracks, correct=t) for t in selected]
         self._current = 0
         self._score = 0
-        # Resolve the active device once at quiz start rather than per question
-        self._device_id = self.model.get_active_device()
         self._show_question()
         self.view.switch("quiz")
 
@@ -45,30 +44,27 @@ class QuizController:
         )
         self.frame.progress_bar["maximum"] = total
         self.frame.progress_bar["value"] = self._current
-
         self.frame.prompt.config(text="Listen to the track — which song is it?")
-        if self._show_artist:
-            self.frame.artist_label.config(text=f"Artist:  {q['track'].artists[0]}")
-        else:
-            self.frame.artist_label.config(text="Artist hidden — can you guess?")
+        self.frame.artist_label.config(
+            text=f"Artist:  {q['track'].artists[0]}" if self._show_artist
+            else "Artist hidden — can you guess?"
+        )
         self.frame.feedback_label.config(text="", fg=theme.TEXT)
         self.frame.audio_status.config(text="")
         self.frame.next_btn.grid_remove()
 
         for i, btn in enumerate(self.frame.choice_btns):
             choice = q["choices"][i] if i < len(q["choices"]) else ""
-            btn.config(text=choice, style="Choice.TButton",
-                       state="normal",
+            btn.config(text=choice, style="Choice.TButton", state="normal",
                        command=lambda c=choice: self._answer(c))
 
-        self.frame.play_btn.config(
-            state="normal",
-            command=lambda: self._play(q["track"].uri),
-        )
+        self.frame.play_btn.config(state="normal",
+                                   command=lambda: self._play(q["track"].uri))
         self._play(q["track"].uri)
 
+    # ── Playback ──────────────────────────────────────────────────────────────
+
     def _play(self, uri: str):
-        """Start playback on a background thread, auto-pause after PLAYBACK_SECONDS."""
         self._cancel_pause_timer()
         self.frame.play_btn.config(state="disabled")
         self.frame.audio_status.config(text="Starting playback…")
@@ -82,16 +78,17 @@ class QuizController:
             self.frame.after(0, self._on_play_error, str(e))
 
     def _on_playing(self):
-        self.frame.audio_status.config(text=f"▶  Playing…  (pauses in {PLAYBACK_SECONDS}s)")
+        self.frame.audio_status.config(
+            text=f"▶  Playing…  (pauses in {PLAYBACK_SECONDS}s)")
         self.frame.play_btn.config(state="normal")
-        # Auto-pause after PLAYBACK_SECONDS so the user has to answer from memory
         self._pause_timer = threading.Timer(PLAYBACK_SECONDS, self._auto_pause)
         self._pause_timer.daemon = True
         self._pause_timer.start()
 
     def _auto_pause(self):
         self.model.pause_playback()
-        self.frame.after(0, self.frame.audio_status.config, {"text": "⏸  Paused — make your guess!"})
+        self.frame.after(0, self.frame.audio_status.config,
+                         {"text": "⏸  Paused — make your guess!"})
 
     def _on_play_error(self, message: str):
         self.frame.audio_status.config(text=message)
@@ -102,9 +99,10 @@ class QuizController:
             self._pause_timer.cancel()
             self._pause_timer = None
 
+    # ── Answering ─────────────────────────────────────────────────────────────
+
     def _answer(self, chosen: str):
         self._cancel_pause_timer()
-        # Pause in background — don't block the UI
         threading.Thread(target=self.model.pause_playback, daemon=True).start()
         self.frame.play_btn.config(state="disabled")
         self.frame.audio_status.config(text="")
@@ -126,7 +124,6 @@ class QuizController:
             self.frame.feedback_label.config(
                 text=f'✗  Wrong — it was "{correct}"', fg=theme.DANGER)
 
-        # Always reveal the artist after answering so the user can learn
         if not self._show_artist:
             self.frame.artist_label.config(text=f"Artist:  {q['track'].artists[0]}")
 
@@ -141,6 +138,8 @@ class QuizController:
         self._current += 1
         self._show_question()
 
+    # ── Results ───────────────────────────────────────────────────────────────
+
     def _finish(self):
         self._cancel_pause_timer()
         threading.Thread(target=self.model.pause_playback, daemon=True).start()
@@ -153,6 +152,15 @@ class QuizController:
             else "Not bad! 👍" if pct >= 40
             else "Keep listening! 🎧"
         )
+
+        # Save to leaderboard before showing results
+        self.lb.save(
+            playlist=self._playlist_name,
+            score=self._score,
+            total=total,
+            show_artist=self._show_artist,
+        )
+
         self.frame.progress_bar["value"] = total
         self.frame.progress_label.config(
             text=f"Score: {self._score}/{total}  ({pct}%)  —  {rating}"
@@ -164,12 +172,26 @@ class QuizController:
         self.frame.play_btn.config(state="disabled")
         for btn in self.frame.choice_btns:
             btn.grid_remove()
-        self.frame.next_btn.config(text="Back to Home", command=self._back_home)
+
+        # Show two buttons: view leaderboard or go home
+        self.frame.next_btn.config(text="🏆 Leaderboard",
+                                   command=self._view_leaderboard)
         self.frame.next_btn.grid()
+        self.frame.home_btn.grid()
+
+    def _view_leaderboard(self):
+        self._reset_choice_btns()
+        # Delegate to leaderboard controller via the view callback
+        if self.view._on_show_leaderboard:
+            self.view._on_show_leaderboard()
 
     def _back_home(self):
+        self._reset_choice_btns()
+        self.view.switch("home")
+
+    def _reset_choice_btns(self):
         for btn in self.frame.choice_btns:
             btn.grid()
             btn.config(style="Choice.TButton")
         self.frame.play_btn.config(state="normal")
-        self.view.switch("home")
+        self.frame.home_btn.grid_remove()

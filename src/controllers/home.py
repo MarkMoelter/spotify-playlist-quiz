@@ -73,8 +73,12 @@ class HomeController:
     def _on_tracks_loaded(self, tracks):
         self._set_status(f"{len(tracks)} tracks loaded.")
         self.frame.select_playlist_btn.config(state="normal")
-        show_artist = self.frame.show_artist.get()
-        self.view.start_quiz(tracks, show_artist=show_artist)
+        self.view.start_quiz(
+            tracks,
+            show_artist=self.frame.show_artist.get(),
+            num_questions=int(self.frame.quiz_length.get()),
+            playlist_name=self.frame.playlists.get(),
+        )
 
     def _on_track_error(self, message: str):
         self._set_status(message)

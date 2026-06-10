@@ -1,4 +1,5 @@
 from .home import HomeView
+from .leaderboard import LeaderboardView
 from .quiz import QuizView
 from .root import Root
 from .sign_in import SignInView
@@ -14,8 +15,10 @@ class View:
         self._add_frame(SignUpView, "signup")
         self._add_frame(HomeView, "home")
         self._add_frame(QuizView, "quiz")
+        self._add_frame(LeaderboardView, "leaderboard")
 
-        self._on_start_quiz = None  # set by Controller
+        self._on_start_quiz = None       # set by Controller
+        self._on_show_leaderboard = None  # set by Controller
 
     def _add_frame(self, Frame, name):
         self.frames[name] = Frame(self.root)
@@ -25,9 +28,12 @@ class View:
     def switch(self, name):
         self.frames[name].tkraise()
 
-    def start_quiz(self, tracks, show_artist: bool = True):
+    def start_quiz(self, tracks, show_artist: bool = True,
+                   num_questions: int = 10, playlist_name: str = ""):
         if self._on_start_quiz:
-            self._on_start_quiz(tracks, show_artist=show_artist)
+            self._on_start_quiz(tracks, show_artist=show_artist,
+                                num_questions=num_questions,
+                                playlist_name=playlist_name)
 
     def start_mainloop(self):
         self.root.mainloop()
