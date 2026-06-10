@@ -176,8 +176,21 @@ class Model:
         The caller is responsible for ensuring each correct track is unique across
         a quiz round — sample without replacement before calling this.
         """
-        wrong_pool = [t for t in tracks if t.uri != correct.uri]
-        wrong = random.sample(wrong_pool, min(3, len(wrong_pool)))
-        choices = [t.name for t in wrong] + [correct.name]
+        # Exclude any track whose name matches the correct answer — different
+        # URIs can share a name (covers, remixes, alternate versions).
+        wrong_pool = [t for t in tracks if t.name != correct.name]
+
+        # Deduplicate by name so the same title can't appear twice as a wrong choice.
+        # We pick from unique names to avoid showing e.g. two remixes of the same song.
+        seen: set[str] = set()
+        unique_wrong: list[Track] = []
+        for t in random.sample(wrong_pool, len(wrong_pool)):  # shuffle first
+            if t.name not in seen:
+                seen.add(t.name)
+                unique_wrong.append(t)
+            if len(unique_wrong) == 3:
+                break
+
+        choices = [t.name for t in unique_wrong] + [correct.name]
         random.shuffle(choices)
         return {"track": correct, "choices": choices, "answer": correct.name}
