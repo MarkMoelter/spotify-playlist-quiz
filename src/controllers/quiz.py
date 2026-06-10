@@ -29,7 +29,7 @@ class QuizController:
         self._playlist_name = playlist_name
         n = min(num_questions, len(tracks))
         selected = random.sample(tracks, n)
-        self._questions = [self.model.build_question(tracks, correct=t) for t in selected]
+        self._questions = self.model.build_questions(tracks, selected)
         self._current = 0
         self._score = 0
         self._show_question()

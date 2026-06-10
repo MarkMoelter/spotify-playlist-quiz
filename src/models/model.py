@@ -170,27 +170,44 @@ class Model:
 
     # ── Quiz ──────────────────────────────────────────────────────────────────
 
-    def build_question(self, tracks: list[Track], correct: Track) -> dict:
-        """Build a question for the given correct track with 3 random wrong choices.
+    def build_questions(self, tracks: list[Track],
+                        selected: list[Track]) -> list[dict]:
+        """Build one question per selected track, varying wrong choices across the round.
 
-        The caller is responsible for ensuring each correct track is unique across
-        a quiz round — sample without replacement before calling this.
+        Building all questions together (rather than one at a time) lets us track
+        which names have already appeared as distractors and prefer fresh ones for
+        each new question — so the same song doesn't show up as a wrong choice over
+        and over.
         """
-        # Exclude any track whose name matches the correct answer — different
-        # URIs can share a name (covers, remixes, alternate versions).
-        wrong_pool = [t for t in tracks if t.name != correct.name]
+        # Names used as correct answers are never eligible as wrong choices
+        correct_names: set[str] = {t.name for t in selected}
 
-        # Deduplicate by name so the same title can't appear twice as a wrong choice.
-        # We pick from unique names to avoid showing e.g. two remixes of the same song.
-        seen: set[str] = set()
-        unique_wrong: list[Track] = []
-        for t in random.sample(wrong_pool, len(wrong_pool)):  # shuffle first
-            if t.name not in seen:
-                seen.add(t.name)
-                unique_wrong.append(t)
-            if len(unique_wrong) == 3:
-                break
+        # Deduplicate the full wrong pool by name upfront — covers/remixes with
+        # the same title count as one candidate
+        unique_pool: dict[str, Track] = {}
+        for t in tracks:
+            if t.name not in correct_names and t.name not in unique_pool:
+                unique_pool[t.name] = t
+        pool_names = list(unique_pool.keys())
 
-        choices = [t.name for t in unique_wrong] + [correct.name]
-        random.shuffle(choices)
-        return {"track": correct, "choices": choices, "answer": correct.name}
+        used_as_wrong: set[str] = set()
+        questions: list[dict] = []
+
+        for correct in selected:
+            random.shuffle(pool_names)
+
+            # Prefer names not yet used as a wrong choice in this round
+            unused = [n for n in pool_names if n not in used_as_wrong]
+            already_used = [n for n in pool_names if n in used_as_wrong]
+            ordered = unused + already_used  # fresh choices first, stale as fallback
+
+            wrong_names = ordered[:3]
+            for name in wrong_names:
+                used_as_wrong.add(name)
+
+            choices = wrong_names + [correct.name]
+            random.shuffle(choices)
+            questions.append({"track": correct, "choices": choices,
+                               "answer": correct.name})
+
+        return questions
