@@ -35,6 +35,11 @@ class SignInController:
             self.frame.after(0, self._on_error,
                              "An unexpected error occurred. Check the logs.")
 
+    def reset(self):
+        """Restore the sign-in screen to its initial state — called on logout."""
+        self.frame.signin_btn.config(state="normal")
+        self.frame.status_label.config(text="")
+
     def _on_error(self, message: str):
         self.frame.status_label.config(text=message)
         self.frame.signin_btn.config(state="normal")

@@ -23,6 +23,7 @@ class Controller:
             self.home_controller.update_view()
             self.view.switch("home")
         else:
+            self.signin_controller.reset()
             self.view.switch("signin")
 
     def start(self):

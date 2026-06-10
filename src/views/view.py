@@ -25,9 +25,9 @@ class View:
     def switch(self, name):
         self.frames[name].tkraise()
 
-    def start_quiz(self, tracks):
+    def start_quiz(self, tracks, show_artist: bool = True):
         if self._on_start_quiz:
-            self._on_start_quiz(tracks)
+            self._on_start_quiz(tracks, show_artist=show_artist)
 
     def start_mainloop(self):
         self.root.mainloop()

@@ -1,8 +1,12 @@
-from src.audio import AudioPlayer
+import random
+import threading
+
+from src.exceptions import NetworkError, PlaylistError
 from src.models.track import Track
 from src.views import theme
 
 QUESTIONS_PER_ROUND = 10
+PLAYBACK_SECONDS = 15  # how long to play before auto-pausing
 
 
 class QuizController:
@@ -14,17 +18,21 @@ class QuizController:
         self._questions: list[dict] = []
         self._current: int = 0
         self._score: int = 0
+        self._device_id: str | None = None
+        self._pause_timer: threading.Timer | None = None
+        self._show_artist: bool = True
 
-        self._audio = AudioPlayer()
-        # Bridge background-thread status updates to the Tkinter main thread
-        self._audio.on_status = lambda s: self.frame.after(0, self._on_audio_status, s)
-
-    def start(self, tracks: list[Track]):
+    def start(self, tracks: list[Track], show_artist: bool = True):
         self._tracks = tracks
+        self._show_artist = show_artist
         n = min(QUESTIONS_PER_ROUND, len(tracks))
-        self._questions = [self.model.build_question(tracks) for _ in range(n)]
+        # Sample without replacement so no track appears as the answer twice
+        selected = random.sample(tracks, n)
+        self._questions = [self.model.build_question(tracks, correct=t) for t in selected]
         self._current = 0
         self._score = 0
+        # Resolve the active device once at quiz start rather than per question
+        self._device_id = self.model.get_active_device()
         self._show_question()
         self.view.switch("quiz")
 
@@ -35,12 +43,14 @@ class QuizController:
         self.frame.progress_label.config(
             text=f"Question {self._current + 1} of {total}  ·  Score: {self._score}"
         )
-        # Progress bar tracks how far through the quiz we are
         self.frame.progress_bar["maximum"] = total
         self.frame.progress_bar["value"] = self._current
 
-        self.frame.prompt.config(text="Listen to the preview — which song is it?")
-        self.frame.artist_label.config(text=f"Artist:  {q['track'].artists[0]}")
+        self.frame.prompt.config(text="Listen to the track — which song is it?")
+        if self._show_artist:
+            self.frame.artist_label.config(text=f"Artist:  {q['track'].artists[0]}")
+        else:
+            self.frame.artist_label.config(text="Artist hidden — can you guess?")
         self.frame.feedback_label.config(text="", fg=theme.TEXT)
         self.frame.audio_status.config(text="")
         self.frame.next_btn.grid_remove()
@@ -51,32 +61,57 @@ class QuizController:
                        state="normal",
                        command=lambda c=choice: self._answer(c))
 
-        preview_url = q["track"].preview_url
-        self.frame.play_btn.config(state="normal",
-                                   command=lambda: self._audio.play(preview_url))
-        self._audio.play(preview_url)
+        self.frame.play_btn.config(
+            state="normal",
+            command=lambda: self._play(q["track"].uri),
+        )
+        self._play(q["track"].uri)
 
-    def _on_audio_status(self, status: str):
-        messages = {
-            "loading":     "Loading preview…",
-            "playing":     "▶  Playing…",
-            "done":        "",
-            "unavailable": "No preview available for this track.",
-        }
-        self.frame.audio_status.config(text=messages.get(status, ""))
-        # Prevent stacking multiple downloads by disabling the button while busy
-        busy = status in ("loading", "playing")
-        self.frame.play_btn.config(state="disabled" if busy else "normal")
+    def _play(self, uri: str):
+        """Start playback on a background thread, auto-pause after PLAYBACK_SECONDS."""
+        self._cancel_pause_timer()
+        self.frame.play_btn.config(state="disabled")
+        self.frame.audio_status.config(text="Starting playback…")
+        threading.Thread(target=self._do_play, args=(uri,), daemon=True).start()
+
+    def _do_play(self, uri: str):
+        try:
+            self.model.play_track(uri, self.model.get_active_device())
+            self.frame.after(0, self._on_playing)
+        except (NetworkError, PlaylistError) as e:
+            self.frame.after(0, self._on_play_error, str(e))
+
+    def _on_playing(self):
+        self.frame.audio_status.config(text=f"▶  Playing…  (pauses in {PLAYBACK_SECONDS}s)")
+        self.frame.play_btn.config(state="normal")
+        # Auto-pause after PLAYBACK_SECONDS so the user has to answer from memory
+        self._pause_timer = threading.Timer(PLAYBACK_SECONDS, self._auto_pause)
+        self._pause_timer.daemon = True
+        self._pause_timer.start()
+
+    def _auto_pause(self):
+        self.model.pause_playback()
+        self.frame.after(0, self.frame.audio_status.config, {"text": "⏸  Paused — make your guess!"})
+
+    def _on_play_error(self, message: str):
+        self.frame.audio_status.config(text=message)
+        self.frame.play_btn.config(state="normal")
+
+    def _cancel_pause_timer(self):
+        if self._pause_timer:
+            self._pause_timer.cancel()
+            self._pause_timer = None
 
     def _answer(self, chosen: str):
-        self._audio.stop()
+        self._cancel_pause_timer()
+        # Pause in background — don't block the UI
+        threading.Thread(target=self.model.pause_playback, daemon=True).start()
         self.frame.play_btn.config(state="disabled")
+        self.frame.audio_status.config(text="")
 
         q = self._questions[self._current]
         correct = q["answer"]
 
-        # ttk buttons can't take bg= directly — we swap named styles instead.
-        # The styles "Correct.TButton" and "Wrong.TButton" are defined in theme.py.
         for btn in self.frame.choice_btns:
             btn.config(state="disabled")
             if btn["text"] == correct:
@@ -91,6 +126,10 @@ class QuizController:
             self.frame.feedback_label.config(
                 text=f'✗  Wrong — it was "{correct}"', fg=theme.DANGER)
 
+        # Always reveal the artist after answering so the user can learn
+        if not self._show_artist:
+            self.frame.artist_label.config(text=f"Artist:  {q['track'].artists[0]}")
+
         last = self._current == len(self._questions) - 1
         self.frame.next_btn.config(
             text="See Results" if last else "Next  →",
@@ -103,7 +142,9 @@ class QuizController:
         self._show_question()
 
     def _finish(self):
-        self._audio.stop()
+        self._cancel_pause_timer()
+        threading.Thread(target=self.model.pause_playback, daemon=True).start()
+
         total = len(self._questions)
         pct = self._score * 100 // total
         rating = (

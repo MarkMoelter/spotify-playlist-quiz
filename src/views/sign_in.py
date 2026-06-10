@@ -9,8 +9,8 @@ class SignInView(Frame):
 
         self.grid_columnconfigure(0, weight=1)
 
-        Label(self, text="🎵  Spotify Playlist Quiz", **theme.LABEL_KW,
-              font=theme.FONT_TITLE).grid(row=0, column=0, pady=(60, 8))
+        Label(self, text="🎵  Spotify Playlist Quiz",
+              **theme.LABEL_BASE, font=theme.FONT_TITLE).grid(row=0, column=0, pady=(60, 8))
 
         Label(self, text="Connect your Spotify account to start.",
               **theme.LABEL_DIM).grid(row=1, column=0, pady=(0, 30))

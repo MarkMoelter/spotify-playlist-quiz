@@ -66,14 +66,15 @@ class HomeController:
             self.frame.after(0, self._on_tracks_loaded, tracks)
         except (NetworkError, PlaylistError) as e:
             self.frame.after(0, self._on_track_error, str(e))
-        except Exception as e:
+        except Exception:
             logger.exception("Unexpected error loading tracks")
             self.frame.after(0, self._on_track_error, "Something went wrong loading tracks.")
 
     def _on_tracks_loaded(self, tracks):
-        self._set_status("")
+        self._set_status(f"{len(tracks)} tracks loaded.")
         self.frame.select_playlist_btn.config(state="normal")
-        self.view.start_quiz(tracks)
+        show_artist = self.frame.show_artist.get()
+        self.view.start_quiz(tracks, show_artist=show_artist)
 
     def _on_track_error(self, message: str):
         self._set_status(message)

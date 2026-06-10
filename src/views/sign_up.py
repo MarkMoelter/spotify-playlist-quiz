@@ -10,8 +10,8 @@ class SignUpView(Frame):
         self.grid_columnconfigure(0, weight=0)
         self.grid_columnconfigure(1, weight=1)
 
-        Label(self, text="Create a new account", **theme.LABEL_KW,
-              font=theme.FONT_HEADER).grid(
+        Label(self, text="Create a new account",
+              **theme.LABEL_BASE, font=theme.FONT_HEADER).grid(
             row=0, column=0, columnspan=2, pady=(20, 16))
 
         for row, field in enumerate(["Full Name", "Username"], start=1):

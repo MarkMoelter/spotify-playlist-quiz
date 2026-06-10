@@ -24,14 +24,19 @@ class Model:
         """
         client_id = os.getenv("SPOTIPY_CLIENT_ID")
         client_secret = os.getenv("SPOTIPY_CLIENT_SECRET")
-        redirect_url = os.getenv("REDIRECT_URI", "http://localhost:8888/callback")
+        redirect_url = os.getenv("REDIRECT_URI", "http://127.0.0.1:8888/callback")
 
         if not client_id or not client_secret:
             raise AuthError(
                 "SPOTIPY_CLIENT_ID and SPOTIPY_CLIENT_SECRET must be set in your .env file."
             )
 
-        scope = "playlist-read-private playlist-read-collaborative"
+        scope = (
+            "playlist-read-private "
+            "playlist-read-collaborative "
+            "user-modify-playback-state "  # needed to start/pause playback
+            "user-read-playback-state"     # needed to check active devices
+        )
         try:
             oauth = spotipy.SpotifyOAuth(
                 client_id=client_id,
@@ -119,11 +124,58 @@ class Model:
             )
         return songs
 
+    # ── Playback ──────────────────────────────────────────────────────────────
+
+    def get_active_device(self) -> str | None:
+        """Return the ID of the user's active Spotify device, or None."""
+        try:
+            devices = self._client.devices().get("devices", [])
+            # Prefer the currently active device; fall back to the first available
+            for d in devices:
+                if d["is_active"]:
+                    return d["id"]
+            return devices[0]["id"] if devices else None
+        except Exception:
+            return None
+
+    def play_track(self, uri: str, device_id: str | None = None):
+        """Start playing a track on the given device (or the active device).
+
+        Raises:
+            NetworkError: Spotify API call failed.
+            PlaylistError: no active device found.
+        """
+        if device_id is None:
+            device_id = self.get_active_device()
+        if device_id is None:
+            raise PlaylistError(
+                "No active Spotify device found. Open Spotify on your phone or "
+                "desktop and play something briefly, then try again."
+            )
+        try:
+            self._client.start_playback(device_id=device_id, uris=[uri])
+        except (ConnectionError, Timeout):
+            raise NetworkError("Lost connection while starting playback.")
+        except spotipy.SpotifyException as e:
+            if e.http_status == 403:
+                raise PlaylistError("Spotify Premium is required for playback control.")
+            raise NetworkError(f"Spotify playback error ({e.http_status}).")
+
+    def pause_playback(self, device_id: str | None = None):
+        """Pause playback. Silently ignored if nothing is playing."""
+        try:
+            self._client.pause_playback(device_id=device_id)
+        except Exception:
+            pass  # not playing, no device, etc. — all fine to ignore
+
     # ── Quiz ──────────────────────────────────────────────────────────────────
 
-    def build_question(self, tracks: list[Track]) -> dict:
-        """Pick a random track and return a question dict with 4 choices."""
-        correct = random.choice(tracks)
+    def build_question(self, tracks: list[Track], correct: Track) -> dict:
+        """Build a question for the given correct track with 3 random wrong choices.
+
+        The caller is responsible for ensuring each correct track is unique across
+        a quiz round — sample without replacement before calling this.
+        """
         wrong_pool = [t for t in tracks if t.uri != correct.uri]
         wrong = random.sample(wrong_pool, min(3, len(wrong_pool)))
         choices = [t.name for t in wrong] + [correct.name]

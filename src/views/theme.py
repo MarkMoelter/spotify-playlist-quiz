@@ -25,8 +25,12 @@ FONT_SMALL  = ("Helvetica", 9, "italic")
 # ── Widget keyword bundles ────────────────────────────────────────────────────
 # Pass these as **LABEL_KW, **BUTTON_KW etc. to avoid repeating bg/fg everywhere.
 FRAME_KW  = {"bg": BG}
+# font is intentionally excluded — pass it explicitly when you need a non-default size
 LABEL_KW  = {"bg": BG, "fg": TEXT, "font": FONT_BODY}
 LABEL_DIM = {"bg": BG, "fg": TEXT_DIM, "font": FONT_SMALL}
+# Use these when you need to override font — spreads bg/fg only
+LABEL_BASE = {"bg": BG, "fg": TEXT}
+LABEL_DIM_BASE = {"bg": BG, "fg": TEXT_DIM}
 
 
 def apply(root):

@@ -19,7 +19,7 @@ class QuizView(Frame):
 
         # ── Prompt ────────────────────────────────────────────────────────────
         self.prompt = Label(self, text="", wraplength=460,
-                            **theme.LABEL_KW, font=theme.FONT_HEADER)
+                            **theme.LABEL_BASE, font=theme.FONT_HEADER)
         self.prompt.grid(row=2, column=0, padx=10, pady=(4, 2))
 
         self.artist_label = Label(self, text="", **theme.LABEL_DIM)
@@ -43,8 +43,8 @@ class QuizView(Frame):
             self.choice_btns.append(btn)
 
         # ── Feedback + next ───────────────────────────────────────────────────
-        self.feedback_label = Label(self, text="", **theme.LABEL_KW,
-                                    font=("Helvetica", 11, "bold"))
+        self.feedback_label = Label(self, text="",
+                                    **theme.LABEL_BASE, font=("Helvetica", 11, "bold"))
         self.feedback_label.grid(row=10, column=0, pady=(8, 2))
 
         self.next_btn = ttk.Button(self, text="Next", style="Green.TButton")
